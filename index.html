@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Duet Messenger</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-container" class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--primary-color)">
+                    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.59 1.37 5.08L2 22l5.06-1.37C8.51 21.5 10.21 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5z"/>
+                </svg>
+            </div>
+            <h1>Duet Messenger</h1>
+            <p class="auth-subtitle">Private secure chat for two</p>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="username-input">Username</label>
+                    <input type="text" id="username-input" placeholder="Type your exact name..." required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="password-input">Password</label>
+                    <input type="password" id="password-input" placeholder="Enter password" required autocomplete="current-password">
+                </div>
+                <div id="login-error" class="error-message hidden"></div>
+                <button type="submit" id="login-btn" class="primary-btn">
+                    <span class="btn-text">Log In</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </form>
+            <div class="auth-footer">Authorized access only (Krishna Bea & Yearner)</div>
+        </div>
+    </div>
+
+    <!-- MAIN MESSENGER APP -->
+    <div id="app-container" class="app-layout hidden">
+        
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="sidebar">
+            <header class="sidebar-header">
+                <div class="current-user-profile" id="current-user-profile">
+                    <div class="avatar-wrapper">
+                        <img id="my-avatar" src="" alt="Avatar" class="avatar">
+                        <span class="status-indicator online"></span>
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="my-name">Loading...</h3>
+                        <span class="profile-status">Active</span>
+                    </div>
+                </div>
+                <div class="sidebar-actions">
+                    <button class="icon-btn" id="settings-toggle-btn" title="Settings" aria-label="Settings">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="sidebar-search">
+                <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <input type="text" id="sidebar-search-input" placeholder="Search conversation...">
+                </div>
+            </div>
+
+            <div class="conversation-list" id="conversation-list">
+                <!-- Single conversation item populated dynamically -->
+                <div class="conversation-item active" onclick="openChat()">
+                    <div class="avatar-wrapper">
+                        <img id="peer-avatar-sidebar" src="" alt="Peer Avatar" class="avatar">
+                        <span id="peer-status-dot" class="status-indicator offline"></span>
+                    </div>
+                    <div class="conv-details">
+                        <div class="conv-header-row">
+                            <h4 id="peer-name-sidebar">Loading...</h4>
+                            <span id="conv-time" class="conv-time"></span>
+                        </div>
+                        <p id="conv-last-msg" class="conv-preview">No messages yet</p>
+                    </div>
+                    <div id="unread-badge" class="unread-badge hidden">0</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CHAT AREA -->
+        <main id="chat-area" class="chat-area">
+            <header class="chat-header" id="chat-header">
+                <div class="chat-header-left">
+                    <button class="icon-btn mobile-back-btn" id="mobile-back-btn" onclick="closeChatMobile()" aria-label="Back">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </button>
+                    <div class="avatar-wrapper">
+                        <img id="peer-avatar-header" src="" alt="Peer Avatar" class="avatar">
+                        <span id="peer-status-dot-header" class="status-indicator offline"></span>
+                    </div>
+                    <div class="chat-title-info">
+                        <h3 id="peer-name-header">Loading...</h3>
+                        <span id="peer-status-text" class="chat-status">Offline</span>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="icon-btn" onclick="toggleSearchPanel()" title="Search in chat" aria-label="Search">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    </button>
+                    <button class="icon-btn" onclick="toggleDetailsPanel()" title="Conversation Info" aria-label="Conversation Details">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- IN-CHAT SEARCH SUB-BAR -->
+            <div id="chat-search-bar" class="chat-search-bar hidden">
+                <input type="text" id="chat-search-input" placeholder="Search messages..." oninput="handleMessageSearch(this.value)">
+                <button class="icon-btn" onclick="toggleSearchPanel()">×</button>
+            </div>
+
+            <!-- MESSAGES CONTAINER -->
+            <div class="messages-container" id="messages-container">
+                <div id="load-more-trigger" class="load-more hidden" onclick="loadMoreMessages()">Load older messages</div>
+                <div id="message-list" class="message-list">
+                    <!-- Messages rendered here -->
+                </div>
+                <div id="typing-indicator" class="typing-indicator hidden">
+                    <span id="typing-text">User is typing...</span>
+                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                </div>
+            </div>
+
+            <!-- QUICK REPLIES BAR -->
+            <div class="quick-replies" id="quick-replies">
+                <button onclick="sendQuickReply('👋 Hello!')">👋 Hello!</button>
+                <button onclick="sendQuickReply('❤️️ Miss you!')">❤️ Miss you!</button>
+                <button onclick="sendQuickReply('👍 On my way!')">👍 On my way!</button>
+                <button onclick="sendQuickReply('✨ Sounds good!')">✨ Sounds good!</button>
+            </div>
+
+            <!-- MESSAGE INPUT AREA -->
+            <footer class="chat-input-footer">
+                <div class="input-actions-left">
+                    <label class="icon-btn file-upload-label" title="Attach Image" aria-label="Upload Image">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                        <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/webp,image/gif" onchange="handleImageUpload(event)" hidden>
+                    </label>
+                    <button class="icon-btn" id="emoji-picker-btn" onclick="toggleEmojiPicker(event)" title="Insert Emoji" aria-label="Emoji Picker">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                    </button>
+                </div>
+                
+                <div class="message-input-wrapper">
+                    <textarea id="message-textarea" placeholder="Aa" rows="1" onkeydown="handleKeyInput(event)" oninput="handleTypingEvent()"></textarea>
+                </div>
+
+                <div class="input-actions-right">
+                    <button class="icon-btn send-btn" id="send-btn" onclick="sendMessage()" title="Send" aria-label="Send Message">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
+                </div>
+
+                <!-- EMOJI POPUP -->
+                <div id="emoji-picker-popup" class="emoji-picker-popup hidden">
+                    <div class="emoji-grid" id="emoji-grid"></div>
+                </div>
+            </footer>
+        </main>
+
+        <!-- DETAILS PANEL -->
+        <aside id="details-panel" class="details-panel hidden">
+            <div class="details-header">
+                <h3>Conversation Info</h3>
+                <button class="icon-btn" onclick="toggleDetailsPanel()">×</button>
+            </div>
+            <div class="details-content">
+                <div class="details-profile-card">
+                    <img id="details-avatar" src="" alt="Avatar" class="avatar-large">
+                    <h3 id="details-name">Name</h3>
+                    <span id="details-status" class="details-status-badge">Offline</span>
+                </div>
+                <div class="details-section">
+                    <h4>Custom Nickname</h4>
+                    <div class="nickname-edit-row">
+                        <input type="text" id="nickname-input" placeholder="Set nickname...">
+                        <button class="secondary-btn" onclick="saveNickname()">Save</button>
+                    </div>
+                </div>
+                <div class="details-section">
+                    <h4>Shared Media</h4>
+                    <div class="shared-media-grid" id="shared-media-grid">
+                        <!-- Images uploaded in chat -->
+                    </div>
+                </div>
+                <div class="details-section">
+                    <h4>Chat Theme Accent</h4>
+                    <div class="theme-color-picker">
+                        <button class="color-dot blue" onclick="setAccentColor('#0084ff')"></button>
+                        <button class="color-dot purple" onclick="setAccentColor('#8a2be2')"></button>
+                        <button class="color-dot pink" onclick="setAccentColor('#e91e63')"></button>
+                        <button class="color-dot green" onclick="setAccentColor('#00c853')"></button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- SETTINGS PANEL MODAL -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button class="icon-btn" onclick="toggleSettingsModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Appearance Theme</strong>
+                            <p>Choose light, dark, or system mode</p>
+                        </div>
+                        <select id="theme-select" onchange="changeTheme(this.value)">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Sound Notifications</strong>
+                            <p>Play chime on new message</p>
+                        </div>
+                        <input type="checkbox" id="sound-toggle" checked>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <strong>Account</strong>
+                            <p id="settings-username-display">Logged in</p>
+                        </div>
+                        <button class="danger-btn" onclick="logout()">Log Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FULLSCREEN IMAGE LIGHTBOX -->
+        <div id="image-lightbox" class="lightbox hidden" onclick="closeLightbox()">
+            <button class="lightbox-close" onclick="closeLightbox()">×</button>
+            <img id="lightbox-img" src="" alt="Fullscreen preview">
+        </div>
+
+    </div>
+
+    <!-- GLOBAL NOTIFICATION TOAST -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
